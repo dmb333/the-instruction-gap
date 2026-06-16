@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Follow Through</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ──────────────────────────────────────────
+   TOKENS
+────────────────────────────────────────── */
+:root {
+  --bg:      #0D1B2A;
+  --surf:    #162234;
+  --raised:  #1E2E42;
+  --bdr:     rgba(255,255,255,0.07);
+  --bdr2:    rgba(255,255,255,0.13);
+  --acc:     #4B8EF5;
+  --acc-dim: rgba(75,142,245,0.10);
+  --t1:      #EDF2F7;
+  --t2:      #7A9BB5;
+  --t3:      #3D5A73;
+  --ok:      #3DBA7F;
+  --err:     #E05A5A;
+  --cr:      #E05A5A;
+  --cy:      #F0C040;
+  --cb:      #4A9EE0;
+  --cg:      #3DBA7F;
+  --fh: 'Space Grotesk', sans-serif;
+  --fb: 'Inter', sans-serif;
+  --fm: 'Space Mono', monospace;
+  --r:  12px;
+  --rs: 7px;
+}
+
+/* ──────────────────────────────────────────
+   RESET & BASE
+────────────────────────────────────────── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: var(--fb);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ──────────────────────────────────────────
+   APP SHELL
+────────────────────────────────────────── */
+.app {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Top bar */
+.topbar {
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--bdr);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: var(--fh);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+  color: var(--acc);
+}
+
+.topbar-meta {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--t3);
+}
+
+/* Bottom tab bar */
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  background: var(--surf);
+  border-top: 1px solid var(--bdr);
+  display: flex;
+  z-index: 30;
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.tabbar.off { display: none; }
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 4px 7px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-ico {
+  font-size: 17px;
+  line-height: 1;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+
+.tab-lbl {
+  font-size: 10px;
+  color: var(--t2);
+  font-family: var(--fb);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  transition: color 0.15s;
+}
+
+.tab.on .tab-ico { opacity: 1; }
+.tab.on .tab-lbl { color: var(--acc); }
+
+/* Screens */
+.screen {
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screen.on { display: flex; }
+
+/* Drill screens fill the viewport so content can center */
+#screen-drill-intro,
+#screen-drill-instruction,
+#screen-drill-countdown,
+#screen-drill-recall,
+#screen-drill-result,
+#screen-drill-complete { flex: 1; }
+
+/* ──────────────────────────────────────────
+   BUTTONS
+────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: var(--r);
+  font-family: var(--fh);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 13px 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  letter-spacing: -0.2px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-p { background: var(--acc); color: #ffffff; }
+.btn-p:hover { filter: brightness(1.08); }
+.btn-p:active { transform: scale(0.97); }
+
+.btn-s { background: var(--raised); color: var(--t1); border: 1px solid var(--bdr2); }
+.btn-s:hover { background: #243447; }
+
+.btn-g { background: none; color: var(--t2); border: 1px solid var(--bdr2); }
+.btn-g:hover { color: var(--t1); border-color: var(--bdr2); background: var(--surf); }
+
+.btn-sm { font-size: 13px; padding: 8px 14px; width: auto; }
+.btn-icon { width: auto; padding: 10px; }
+
+.btn:disabled { opacity: 0.35; cursor: not-allowed; filter: none !important; transform: none !important; }
+
+/* ──────────────────────────────────────────
+   SHARED COMPONENTS
+────────────────────────────────────────── */
+.card {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 16px;
+}
+
+.page-hdr {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--bdr);
+  flex-shrink: 0;
+}
+
+.page-title { font-family: var(--fh); font-size: 15px; font-weight: 700; }
+
+.back {
+  background: none;
+  border: none;
+  color: var(--t2);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.back:hover { color: var(--t1); }
+
+.sh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sh-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--t2);
+  font-weight: 600;
+}
+
+input[type="text"], input[type="email"] {
+  background: var(--bg);
+  border: 1px solid var(--bdr2);
+  border-radius: var(--rs);
+  color: var(--t1);
+  font-family: var(--fb);
+  font-size: 14px;
+  padding: 10px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+
+input:focus { border-color: var(--acc); }
+input::placeholder { color: var(--t3); }
+
+.flbl {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--t2);
+  margin-bottom: 6px;
+}
+
+.fgrp { display: flex; flex-direction: column; gap: 6px; }
+
+.empty {
+  color: var(--t3);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.mla { margin-left: auto; }
+
+/* ──────────────────────────────────────────
+   HOME
+────────────────────────────────────────── */
+.home-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.stat-card { display: flex; flex-direction: column; }
+.stat-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--t2);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.stat-val {
+  font-family: var(--fm);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--t1);
+}
+
+.stat-val.hi { color: var(--acc); }
+.stat-sub { font-size: 11px; color: var(--t3); margin-top: 3px; }
+
+.h-row {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--rs);
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.h-date { font-size: 13px; color: var(--t2); }
+.h-score { font-family: var(--fm); font-size: 12px; }
+.hlist { display: flex; flex-direction: column; gap: 7px; }
+
+/* ──────────────────────────────────────────
+   DRILL INTRO
+────────────────────────────────────────── */
+.intro-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 24px;
+  gap: 20px;
+  text-align: center;
+}
+
+.intro-body h2 {
+  font-family: var(--fh);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.intro-body p { font-size: 14px; color: var(--t2); line-height: 1.6; max-width: 300px; }
+
+.rules { text-align: left; width: 100%; max-width: 340px; }
+
+.rule {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--t2);
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+.rn {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--acc);
+  min-width: 14px;
+  margin-top: 2px;
+}
+
+.intro-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; }
+
+/* ──────────────────────────────────────────
+   DRILL: INSTRUCTION PHASE
+────────────────────────────────────────── */
+.instr-wrap { flex: 1; display: flex; flex-direction: column; }
+
+.step-dots {
+  padding: 14px 20px 0;
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 28px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--t3);
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.dot.done { background: var(--acc); }
+.dot.now  { background: var(--t1); }
+
+.step-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 18px;
+  text-align: center;
+}
+
+.step-verb {
+  font-family: var(--fm);
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--t2);
+}
+
+.shape-wrap {
+  position: relative;
+  width: 152px;
+  height: 152px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.shape-glow {
+  position: absolute;
+  inset: -22px;
+  border-radius: 50%;
+  animation: glow 2.2s ease-in-out infinite;
+}
+
+@keyframes glow { 0%,100% { opacity: 0.2; } 50% { opacity: 0.55; } }
+
+.shape-wrap svg { width: 150px; height: 150px; }
+
+.step-caption {
+  font-family: var(--fh);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--t2);
+  line-height: 1.4;
+}
+
+/* Action animations */
+@keyframes doTap {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.18); }
+  65%  { transform: scale(0.91); }
+  100% { transform: scale(1); }
+}
+
+@keyframes doSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.anim-tap { animation: doTap 0.55s ease 0.3s both; }
+.anim-spin { animation: doSpin 1.6s linear 0.1s infinite; }
+
+/* ──────────────────────────────────────────
+   DRILL: COUNTDOWN
+────────────────────────────────────────── */
+.cd-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cd-lbl {
+  font-family: var(--fh);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 3.5px;
+  color: var(--t2);
+}
+
+.cd-num {
+  font-family: var(--fm);
+  font-size: 90px;
+  color: var(--acc);
+  line-height: 1;
+  letter-spacing: -4px;
+  font-weight: 700;
+}
+
+/* ──────────────────────────────────────────
+   DRILL: RECALL
+────────────────────────────────────────── */
+.recall-wrap { flex: 1; display: flex; flex-direction: column; }
+
+.recall-top {
+  padding: 14px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.recall-prog { font-family: var(--fm); font-size: 12px; color: var(--t2); }
+
+.step-inds { display: flex; gap: 5px; }
+
+.sind {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--t3);
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.sind.done { background: var(--acc); border-color: var(--acc); }
+
+.act-bar {
+  padding: 12px 20px;
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.act-btn {
+  flex: 1;
+  padding: 11px;
+  border: 2px solid var(--bdr2);
+  border-radius: var(--r);
+  background: var(--surf);
+  color: var(--t2);
+  font-family: var(--fh);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.act-btn:hover { border-color: rgba(240,165,0,0.5); color: var(--t1); }
+.act-btn.sel { border-color: var(--acc); background: var(--acc-dim); color: var(--acc); }
+
+/* Shape grid: 3 shapes × 4 colors = 12 cells, 4 columns */
+.shape-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 20px;
+  align-content: center;
+  flex: 1;
+}
+
+.sh-cell {
+  aspect-ratio: 1;
+  background: var(--surf);
+  border: 2px solid var(--bdr);
+  border-radius: var(--r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s;
+  padding: 13px;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.sh-cell svg { width: 100%; height: 100%; }
+.sh-cell:hover { border-color: var(--bdr2); background: var(--raised); }
+.sh-cell:active { transform: scale(0.90); border-color: var(--acc); }
+
+.recall-hint {
+  padding: 10px 20px 14px;
+  font-size: 12px;
+  color: var(--t3);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────
+   DRILL: TRIAL RESULT
+────────────────────────────────────────── */
+.res-body { flex: 1; display: flex; flex-direction: column; }
+
+.res-top { padding: 18px 20px 14px; text-align: center; flex-shrink: 0; }
+
+.res-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 100px;
+  font-family: var(--fh);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.badge-ok  { background: rgba(61,186,127,0.14); color: var(--ok); }
+.badge-ng  { background: rgba(224,90,90,0.14); color: var(--err); }
+
+.res-sub { font-size: 12px; color: var(--t2); margin-top: 8px; }
+
+.res-rows {
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.res-row {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--rs);
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.res-row.ok { border-color: rgba(61,186,127,0.22); }
+.res-row.ng { border-color: rgba(224,90,90,0.22); }
+
+.res-ico {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.res-row.ok .res-ico { background: rgba(61,186,127,0.18); color: var(--ok); }
+.res-row.ng .res-ico { background: rgba(224,90,90,0.18); color: var(--err); }
+
+.res-txt { flex: 1; }
+.res-txt strong { font-size: 13px; font-weight: 500; }
+.res-txt small { display: block; font-size: 11px; color: var(--t3); margin-top: 2px; }
+
+.res-shape { width: 28px; height: 28px; flex-shrink: 0; }
+.res-shape svg { width: 100%; height: 100%; }
+
+.res-footer { padding: 14px 20px 18px; flex-shrink: 0; }
+
+/* ──────────────────────────────────────────
+   DRILL: SESSION COMPLETE
+────────────────────────────────────────── */
+.complete-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 24px;
+  gap: 20px;
+}
+
+.complete-title {
+  font-family: var(--fh);
+  font-size: 19px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.big-score { text-align: center; }
+
+.big-num {
+  font-family: var(--fm);
+  font-size: 82px;
+  color: var(--acc);
+  line-height: 1;
+  letter-spacing: -4px;
+  font-weight: 700;
+}
+
+.big-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--t2);
+  margin-top: 5px;
+}
+
+.score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+
+.complete-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+
+/* ──────────────────────────────────────────
+   PRACTICE HUB
+────────────────────────────────────────── */
+.practice-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.practice-intro h2 { font-family: var(--fh); font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+.practice-intro p { font-size: 13px; color: var(--t2); line-height: 1.55; }
+
+.pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.pcard {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pcard:hover { border-color: rgba(240,165,0,0.38); background: var(--raised); }
+.pcard:active { transform: scale(0.97); }
+
+.pcard-ico { font-size: 24px; line-height: 1; }
+.pcard-title { font-family: var(--fh); font-size: 14px; font-weight: 600; }
+.pcard-desc { font-size: 12px; color: var(--t2); line-height: 1.5; }
+
+/* ──────────────────────────────────────────
+   ORDERING: TASK LIST
+────────────────────────────────────────── */
+.task-list { padding: 12px 20px; display: flex; flex-direction: column; gap: 8px; }
+
+.task-opt {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.task-opt:hover { border-color: rgba(240,165,0,0.35); }
+.task-opt:active { transform: scale(0.98); }
+
+.task-name { font-size: 14px; font-weight: 500; }
+.task-status { font-family: var(--fm); font-size: 11px; color: var(--t3); }
+
+/* ──────────────────────────────────────────
+   ORDERING: DRILL
+────────────────────────────────────────── */
+.ord-body {
+  padding: 12px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.ord-hint { font-size: 13px; color: var(--t2); line-height: 1.5; }
+
+.ord-list { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+.o-item {
+  background: var(--surf);
+  border: 1.5px solid var(--bdr);
+  border-radius: var(--rs);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+  cursor: grab;
+}
+
+.o-item.dragging { opacity: 0.4; cursor: grabbing; }
+.o-item.drag-over { border-color: var(--acc); background: var(--acc-dim); }
+
+.o-arrows { display: flex; flex-direction: column; gap: 0; flex-shrink: 0; }
+
+.arr {
+  background: none;
+  border: none;
+  color: var(--t3);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arr:hover { color: var(--t2); }
+.arr:disabled { opacity: 0.2; cursor: default; }
+
+.o-num { font-family: var(--fm); font-size: 11px; color: var(--t3); min-width: 18px; flex-shrink: 0; }
+.o-text { font-size: 13px; flex: 1; line-height: 1.4; }
+
+/* ──────────────────────────────────────────
+   ORDERING: RESULT
+────────────────────────────────────────── */
+.ord-res-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; }
+
+.ord-res-title { font-family: var(--fh); font-size: 16px; font-weight: 700; }
+
+.ord-row {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--rs);
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ord-row.ok { border-color: rgba(61,186,127,0.22); }
+.ord-row.ng { border-color: rgba(224,90,90,0.22); }
+
+.ord-ico { font-size: 12px; margin-top: 1px; flex-shrink: 0; }
+.ord-row.ok .ord-ico { color: var(--ok); }
+.ord-row.ng .ord-ico { color: var(--err); }
+
+.ord-pos { font-family: var(--fm); font-size: 10px; color: var(--t3); min-width: 20px; flex-shrink: 0; margin-top: 2px; }
+
+.explanation {
+  background: var(--acc-dim);
+  border: 1px solid rgba(75,142,245,0.18);
+  border-radius: var(--r);
+  padding: 14px;
+  font-size: 13px;
+  color: var(--t2);
+  line-height: 1.6;
+}
+
+/* ──────────────────────────────────────────
+   CHECKLIST: LIST
+────────────────────────────────────────── */
+.cl-list { padding: 12px 20px; display: flex; flex-direction: column; gap: 8px; }
+
+.cl-opt {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cl-opt:hover { border-color: var(--bdr2); }
+.cl-opt:active { transform: scale(0.98); }
+
+.cl-opt-name { font-size: 14px; font-weight: 500; }
+.cl-opt-count { font-size: 12px; color: var(--t2); margin-top: 2px; }
+
+/* ──────────────────────────────────────────
+   CHECKLIST: VIEW
+────────────────────────────────────────── */
+.cl-view-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+
+.cl-step {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--rs);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cl-step.done { opacity: 0.5; }
+
+.cl-chk {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid var(--t3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.cl-step.done .cl-chk { background: var(--ok); border-color: var(--ok); color: white; }
+
+.cl-step-txt { font-size: 14px; flex: 1; line-height: 1.4; }
+.cl-step.done .cl-step-txt { text-decoration: line-through; color: var(--t2); }
+
+/* ──────────────────────────────────────────
+   CHECKLIST: CREATE
+────────────────────────────────────────── */
+.cl-form-body { padding: 14px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+
+.step-row { display: flex; gap: 8px; align-items: center; }
+.step-row input { flex: 1; }
+
+.steps-preview { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+
+.sp-item {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: var(--rs);
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.sp-n { font-family: var(--fm); font-size: 10px; color: var(--t3); min-width: 16px; }
+
+.sp-del {
+  background: none;
+  border: none;
+  color: var(--t3);
+  cursor: pointer;
+  font-size: 17px;
+  margin-left: auto;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sp-del:hover { color: var(--err); }
+
+/* ──────────────────────────────────────────
+   HISTORY
+────────────────────────────────────────── */
+.hist-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+.week-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+
+.wday {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.wday.on { background: var(--acc-dim); border-color: rgba(75,142,245,0.3); }
+
+.wd-lbl { font-size: 9px; color: var(--t3); text-transform: uppercase; }
+.wd-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--t3); }
+.wday.on .wd-dot { background: var(--acc); }
+
+/* ──────────────────────────────────────────
+   SETTINGS
+────────────────────────────────────────── */
+.set-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+
+.set-card { display: flex; flex-direction: column; gap: 12px; }
+.set-title { font-family: var(--fh); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--t2); }
+.set-desc { font-size: 13px; color: var(--t2); line-height: 1.55; }
+
+/* ──────────────────────────────────────────
+   TOAST
+────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: var(--raised);
+  border: 1px solid var(--bdr2);
+  border-radius: 100px;
+  padding: 9px 18px;
+  font-size: 13px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+}
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ──────────────────────────────────────────
+   TOOLTIPS
+────────────────────────────────────────── */
+.qmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bdr2);
+  color: var(--t3);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--fh);
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  background: none;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  vertical-align: middle;
+}
+
+.qmark:hover { color: var(--t1); border-color: var(--acc); }
+
+.tip-bubble {
+  position: fixed;
+  background: var(--raised);
+  border: 1px solid var(--bdr2);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--t2);
+  line-height: 1.55;
+  width: 260px;
+  z-index: 500;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+  pointer-events: none;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="logo">Follow Through</span>
+  <span class="topbar-meta" id="topbar-meta"></span>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: HOME
+═══════════════════════════════════════ -->
+<div class="screen on" id="screen-home">
+  <div class="home-body">
+    <div class="stats-row">
+      <div class="card stat-card">
+        <div class="stat-lbl">Streak</div>
+        <div class="stat-val hi" id="home-streak">0</div>
+        <div class="stat-sub">days</div>
+      </div>
+      <div class="card stat-card">
+          <div class="stat-lbl" style="display:flex;align-items:center;gap:4px;">Best Span <button class="qmark" onclick="showTip(event,'span')">?</button></div>
+          <div class="stat-val" id="home-best">—</div>
+          <div class="stat-sub">steps</div>
+        </div>
+    </div>
+
+    <button class="btn btn-p" onclick="nav('drill-intro')">Start Recall Drill</button>
+    <button class="btn btn-s" onclick="nav('practice')">Applied Practice</button>
+
+    <div>
+      <div class="sh"><span class="sh-lbl">Recent Sessions</span></div>
+      <div class="hlist" id="home-hist"></div>
+    </div>
+
+    <div id="home-partner-sec"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: DRILL INTRO
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-drill-intro">
+  <div class="intro-body">
+    <h2>Recall Drill</h2>
+    <p>A sequence of instructions appears one step at a time. When it ends, reproduce it from memory in order.</p>
+    <div class="card rules">
+      <div class="rule"><span class="rn">1</span><span>Watch each step. It disappears after two seconds.</span></div>
+      <div class="rule"><span class="rn">2</span><span>Choose an action (Tap or Spin), then pick the matching shape.</span></div>
+      <div class="rule"><span class="rn">3</span><span>Get 2 of 3 trials fully right to advance to a longer sequence. <button class="qmark" onclick="showTip(event,'block')">?</button></span></div>
+      <div class="rule"><span class="rn">4</span><span>The session ends when you miss a whole block.</span></div>
+    </div>
+    <div class="intro-btns">
+      <button class="btn btn-p" onclick="startDrill()">Begin</button>
+      <button class="btn btn-g" onclick="nav('home')">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: DRILL INSTRUCTION
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-drill-instruction">
+  <div class="instr-wrap">
+    <div class="step-dots" id="step-dots"></div>
+    <div class="step-stage" id="step-stage"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: DRILL COUNTDOWN
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-drill-countdown">
+  <div class="cd-wrap">
+    <div class="cd-lbl">Your turn</div>
+    <div class="cd-num" id="cd-num">3</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: DRILL RECALL
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-drill-recall">
+  <div class="recall-wrap">
+    <div class="recall-top">
+      <span class="recall-prog" id="recall-prog">Step 1 of —</span>
+      <div class="step-inds" id="step-inds"></div>
+    </div>
+    <div class="act-bar">
+      <button class="act-btn" id="btn-tap" onclick="selAction('tap')">Tap</button>
+      <button class="act-btn" id="btn-spin" onclick="selAction('spin')">Spin</button>
+      <button class="qmark" style="margin-left:2px;" onclick="showTip(event,'actions')">?</button>
+    </div>
+    <div class="shape-grid" id="shape-grid"></div>
+    <div class="recall-hint" id="recall-hint">Select an action, then tap a shape</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: DRILL TRIAL RESULT
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-drill-result">
+  <div class="res-body">
+    <div class="res-top">
+      <div class="res-badge" id="res-badge"></div>
+      <div class="res-sub" id="res-sub"></div>
+    </div>
+    <div class="res-rows" id="res-rows"></div>
+    <div class="res-footer">
+      <button class="btn btn-p" id="res-cont-btn" onclick="continueAfterTrial()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: DRILL COMPLETE
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-drill-complete">
+  <div class="complete-body">
+    <div class="complete-title" id="complete-title">Session Complete</div>
+    <div class="big-score">
+      <div class="big-num" id="complete-span">—</div>
+      <div class="big-lbl">Span Reached</div>
+    </div>
+    <div class="score-grid">
+      <div class="card stat-card">
+        <div class="stat-lbl">Features Hit</div>
+        <div class="stat-val" id="complete-feat">0</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-lbl">Personal Best</div>
+        <div class="stat-val hi" id="complete-pb">—</div>
+      </div>
+    </div>
+    <div class="complete-actions">
+      <button class="btn btn-p" onclick="startDrill()">Drill Again</button>
+      <button class="btn btn-s" onclick="shareScore()">Share Score</button>
+      <button class="btn btn-g" onclick="nav('home')">Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: PRACTICE HUB
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-practice">
+  <div class="practice-body">
+    <div class="practice-intro">
+      <h2>Applied Practice</h2>
+      <p>No scores here. These exercises build the habits that make instructions stick.</p>
+    </div>
+    <div class="pgrid">
+      <div class="pcard" onclick="nav('ordering-list')">
+        <div class="pcard-ico">↕</div>
+        <div style="display:flex;align-items:center;gap:5px;justify-content:center;">
+          <div class="pcard-title">Ordering Drill</div>
+          <button class="qmark" onclick="showTip(event,'ordering')">?</button>
+        </div>
+        <div class="pcard-desc">Put scrambled steps in the right sequence.</div>
+      </div>
+      <div class="pcard" onclick="nav('checklist-list')">
+        <div class="pcard-ico">✓</div>
+        <div style="display:flex;align-items:center;gap:5px;justify-content:center;">
+          <div class="pcard-title">Checklists</div>
+          <button class="qmark" onclick="showTip(event,'checklists')">?</button>
+        </div>
+        <div class="pcard-desc">Build and use your own instruction checklists.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: ORDERING LIST
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-ordering-list">
+  <div class="page-hdr">
+    <button class="back" onclick="nav('practice')">←</button>
+    <span class="page-title" style="display:flex;align-items:center;gap:6px;">Ordering Drill <button class="qmark" onclick="showTip(event,'ordering-page')">?</button></span>
+  </div>
+  <div style="padding:10px 20px 4px;font-size:13px;color:var(--t2);line-height:1.5;">
+    Put the steps in the order you'd actually do them.
+  </div>
+  <div class="task-list" id="task-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: ORDERING DRILL
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-ordering-drill">
+  <div class="page-hdr">
+    <button class="back" onclick="nav('ordering-list')">←</button>
+    <span class="page-title" id="ord-title">Task</span>
+  </div>
+  <div class="ord-body">
+    <div class="ord-hint">Use the arrows to reorder. Drag also works on desktop.</div>
+    <div class="ord-list" id="ord-list"></div>
+    <button class="btn btn-p" onclick="checkOrdering()">Check Order</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: ORDERING RESULT
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-ordering-result">
+  <div class="page-hdr">
+    <button class="back" onclick="nav('ordering-list')">←</button>
+    <span class="page-title">Result</span>
+  </div>
+  <div class="ord-res-body" id="ord-res-body"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: CHECKLIST LIST
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-checklist-list">
+  <div class="page-hdr">
+    <button class="back" onclick="nav('practice')">←</button>
+    <span class="page-title" style="display:flex;align-items:center;gap:6px;">Checklists <button class="qmark" onclick="showTip(event,'checklists-page')">?</button></span>
+    <button class="btn btn-s btn-sm mla" onclick="openCreate()">+ New</button>
+  </div>
+  <div class="cl-list" id="cl-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: CHECKLIST CREATE
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-checklist-create">
+  <div class="page-hdr">
+    <button class="back" onclick="nav('checklist-list')">←</button>
+    <span class="page-title">New Checklist</span>
+  </div>
+  <div class="cl-form-body">
+    <div class="fgrp">
+      <div class="flbl">Task name</div>
+      <input type="text" id="cl-name" placeholder="e.g. Send a client proposal">
+    </div>
+    <div class="fgrp">
+      <div class="flbl">Steps, in order</div>
+      <div class="step-row">
+        <input type="text" id="step-in" placeholder="Add a step…" onkeydown="if(event.key==='Enter')addStep()">
+        <button class="btn btn-s btn-sm" onclick="addStep()">Add</button>
+      </div>
+      <div class="steps-preview" id="steps-preview"></div>
+    </div>
+    <button class="btn btn-p" onclick="saveChecklist()" style="margin-top:auto;">Save Checklist</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: CHECKLIST VIEW
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-checklist-view">
+  <div class="page-hdr">
+    <button class="back" onclick="nav('checklist-list')">←</button>
+    <span class="page-title" id="cl-view-title">Checklist</span>
+    <button class="btn btn-g btn-sm mla" onclick="deleteCL()"
+      style="border-color:rgba(224,90,90,0.35);color:var(--err);">Delete</button>
+  </div>
+  <div class="cl-view-body">
+    <div id="cl-view-steps" style="display:flex;flex-direction:column;gap:8px;flex:1;"></div>
+    <button class="btn btn-g btn-sm" onclick="resetCL()">Reset all</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: HISTORY
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-history">
+  <div class="hist-body">
+    <div>
+      <div class="sh"><span class="sh-lbl">This Week</span></div>
+      <div class="week-row" id="week-row"></div>
+    </div>
+    <div>
+      <div class="sh"><span class="sh-lbl">All Sessions</span></div>
+      <div class="hlist" id="all-hist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: SETTINGS
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-settings">
+  <div class="set-body">
+    <div class="card set-card">
+      <div class="set-title">Practice Partner</div>
+      <div class="set-desc">Name someone who sees your weekly score. A real person who can follow up is the closest this app gets to the accountability the research describes.</div>
+      <div class="fgrp">
+        <div class="flbl">Their name</div>
+        <input type="text" id="p-name" placeholder="Name">
+      </div>
+      <div class="fgrp">
+        <div class="flbl">Their email</div>
+        <input type="email" id="p-email" placeholder="email@example.com">
+      </div>
+      <button class="btn btn-s" onclick="savePartner()">Save Partner</button>
+      <button class="btn btn-g" id="send-btn" onclick="sendEmail()">Send This Week's Score</button>
+    </div>
+    <div class="card set-card">
+      <div class="set-title">Data</div>
+      <button class="btn btn-g" onclick="clearData()"
+        style="border-color:rgba(224,90,90,0.35);color:var(--err);">Clear All Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM TAB BAR -->
+<div class="tabbar" id="tabbar">
+  <button class="tab on" data-tab="home" onclick="nav('home')">
+    <span class="tab-ico">⌂</span>
+    <span class="tab-lbl">Home</span>
+  </button>
+  <button class="tab" data-tab="practice" onclick="nav('practice')">
+    <span class="tab-ico">◈</span>
+    <span class="tab-lbl">Practice</span>
+  </button>
+  <button class="tab" data-tab="history" onclick="nav('history')">
+    <span class="tab-ico">◷</span>
+    <span class="tab-lbl">History</span>
+  </button>
+  <button class="tab" data-tab="settings" onclick="nav('settings')">
+    <span class="tab-ico">⚙</span>
+    <span class="tab-lbl">Settings</span>
+  </button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+</div><!-- /.app -->
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════ */
+const SHAPES  = ['circle', 'square', 'triangle'];
+const COLORS  = ['red', 'yellow', 'blue', 'green'];
+const COLOR_HEX = { red:'#E05A5A', yellow:'#F0C040', blue:'#4A9EE0', green:'#3DBA7F' };
+const ACTIONS = ['tap', 'spin'];
+
+const TASKS = [
+  {
+    id:'install',
+    name:'Install software from a download link',
+    steps:[
+      'Click the download link',
+      'Wait for the file to finish downloading',
+      'Open the downloaded installer',
+      'Accept the license agreement',
+      'Choose the installation folder',
+      'Click Install and wait for it to finish',
+    ],
+    why:'You cannot open a file before it finishes downloading. The installer must open before you can accept terms or choose where to put it.'
+  },
+  {
+    id:'proposal',
+    name:'Send a document for signature',
+    steps:[
+      'Draft the document',
+      'Review it for errors',
+      'Save the final version',
+      'Upload it to the signature platform',
+      "Add the recipient's email",
+      'Send the signature request',
+    ],
+    why:'Reviewing before saving means the version you upload is the right one — not an earlier draft.'
+  },
+  {
+    id:'newclient',
+    name:'Add a new client to your system',
+    steps:[
+      "Collect the client's contact details",
+      'Create a new contact record',
+      'Enter their details into the record',
+      'Tag them with the right category',
+      'Send a welcome email',
+      'Schedule the first follow-up',
+    ],
+    why:'The record must exist before you can enter details, and you need details before you can tag correctly.'
+  },
+  {
+    id:'backup',
+    name:'Edit a file safely',
+    steps:[
+      'Locate the original file',
+      'Copy it to a backup folder',
+      "Rename the backup with today's date",
+      'Open the original to edit',
+      'Make your changes',
+      'Save the edited file',
+    ],
+    why:'Backing up first means you have a clean copy before any changes are made — not after they go wrong.'
+  },
+  {
+    id:'meeting',
+    name:'Set up a video call',
+    steps:[
+      'Decide on the date and time',
+      'Create the calendar invite',
+      'Add the video link to the invite',
+      'Add participants',
+      'Send the invite',
+      'Send a reminder the day before',
+    ],
+    why:'The invite must exist before you can add a video link, participants, or send anything.'
+  },
+];
+
+/* ══════════════════════════════════════════════════════
+   STORAGE
+══════════════════════════════════════════════════════ */
+const KEY = 'ft_v1';
+let S = blankStore();
+
+function blankStore() {
+  return {
+    pb: { span: 0, features: 0 },
+    streak: { n: 0, last: null },
+    history: [],
+    partner: { name: '', email: '' },
+    checklists: [],
+    ordProgress: {},
+  };
+}
+
+function load() {
+  try { const r = localStorage.getItem(KEY); if (r) S = { ...blankStore(), ...JSON.parse(r) }; } catch(e) {}
+}
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════════════
+   SVG SHAPES
+══════════════════════════════════════════════════════ */
+function svg(shape, color) {
+  const c = COLOR_HEX[color] || '#888';
+  let body = '';
+  if (shape === 'circle')   body = `<circle cx="25" cy="25" r="22" fill="${c}"/>`;
+  else if (shape === 'square') body = `<rect x="4" y="4" width="42" height="42" rx="6" fill="${c}"/>`;
+  else                      body = `<polygon points="25,4 46,46 4,46" fill="${c}"/>`;
+  return `<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════ */
+const ALL_SCRS = [
+  'home','drill-intro','drill-instruction','drill-countdown',
+  'drill-recall','drill-result','drill-complete',
+  'practice','ordering-list','ordering-drill','ordering-result',
+  'checklist-list','checklist-create','checklist-view',
+  'history','settings'
+];
+
+const DRILL_SCRS = new Set([
+  'drill-intro','drill-instruction','drill-countdown',
+  'drill-recall','drill-result','drill-complete'
+]);
+
+const TAB_SCRS = ['home','practice','history','settings'];
+
+let iTimer = null;  // instruction step timer
+let cdTimer = null; // countdown interval
+let iActive = false;
+
+function nav(name) {
+  // Kill timers
+  iActive = false;
+  if (iTimer)  { clearTimeout(iTimer);  iTimer = null; }
+  if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+
+  // Switch screens
+  ALL_SCRS.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.toggle('on', s === name);
+  });
+
+  // Tab bar
+  const inDrill = DRILL_SCRS.has(name);
+  document.getElementById('tabbar').classList.toggle('off', inDrill);
+
+  // Active tab highlight
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('on', t.dataset.tab === name);
+  });
+
+  // Per-screen render
+  if (name === 'home')          renderHome();
+  if (name === 'history')       renderHistory();
+  if (name === 'settings')      renderSettings();
+  if (name === 'ordering-list') renderTaskList();
+  if (name === 'checklist-list')renderCLList();
+}
+
+/* ══════════════════════════════════════════════════════
+   HOME
+══════════════════════════════════════════════════════ */
+function renderHome() {
+  document.getElementById('home-streak').textContent = S.streak.n || 0;
+  document.getElementById('home-best').textContent   = S.pb.span > 0 ? S.pb.span : '—';
+  document.getElementById('topbar-meta').textContent =
+    S.streak.n > 1 ? `${S.streak.n}-day streak` : '';
+
+  const hel = document.getElementById('home-hist');
+  if (!S.history.length) {
+    hel.innerHTML = '<div class="empty">No sessions yet. Start your first drill.</div>';
+  } else {
+    hel.innerHTML = [...S.history].reverse().slice(0, 3).map(h => `
+      <div class="h-row">
+        <span class="h-date">${fmtDate(h.date)}</span>
+        <span class="h-score">Span ${h.span} &middot; ${h.features} features</span>
+      </div>`).join('');
+  }
+
+  const pel = document.getElementById('home-partner-sec');
+  if (S.partner.name) {
+    pel.innerHTML = `<div style="font-size:13px;color:var(--t2);">Partner: <strong style="color:var(--t1);">${esc(S.partner.name)}</strong></div>`;
+  } else {
+    pel.innerHTML = `<button class="btn btn-g btn-sm" style="width:auto;" onclick="nav('settings')">Set up a practice partner →</button>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   DRILL ENGINE
+══════════════════════════════════════════════════════ */
+let D = {};
+
+function startDrill() {
+  D = {
+    length: 2,
+    blockTrials: [],
+    sequence: [],
+    trialRecall: [],
+    stepIdx: 0,
+    selAction: null,
+    sessionSpan: 0,
+    sessionFeatures: 0,
+  };
+  runTrial();
+}
+
+function runTrial() {
+  D.sequence   = genSeq(D.length);
+  D.trialRecall = [];
+  D.stepIdx    = 0;
+  showInstruction();
+}
+
+function genSeq(n) {
+  const pool = [];
+  for (const s of SHAPES) for (const c of COLORS) pool.push({ shape: s, color: c });
+  shuffle(pool);
+  return pool.slice(0, n).map(x => ({
+    ...x,
+    action: ACTIONS[Math.floor(Math.random() * 2)],
+  }));
+}
+
+/* — Instruction phase — */
+function showInstruction() {
+  nav('drill-instruction');
+  iActive = true;
+  showStep();
+}
+
+function showStep() {
+  if (!iActive) return;
+
+  if (D.stepIdx >= D.sequence.length) {
+    beginCountdown();
+    return;
+  }
+
+  const step = D.sequence[D.stepIdx];
+  const c    = COLOR_HEX[step.color];
+  const anim = step.action === 'spin' ? 'anim-spin' : 'anim-tap';
+
+  // Dots
+  document.getElementById('step-dots').innerHTML =
+    D.sequence.map((_, i) =>
+      `<div class="dot ${i < D.stepIdx ? 'done' : i === D.stepIdx ? 'now' : ''}"></div>`
+    ).join('');
+
+  // Stage
+  document.getElementById('step-stage').innerHTML = `
+    <div class="step-verb">${step.action}</div>
+    <div class="shape-wrap">
+      <div class="shape-glow" style="background:radial-gradient(circle,${c}38 0%,transparent 68%);"></div>
+      <div class="${anim}" style="width:150px;height:150px;display:flex;align-items:center;justify-content:center;">
+        ${svg(step.shape, step.color)}
+      </div>
+    </div>
+    <div class="step-caption">
+      the <span style="color:${c};font-weight:700;">${step.color}</span> ${step.shape}
+    </div>`;
+
+  // Show for 2.4s, then blank, then advance
+  iTimer = setTimeout(() => {
+    if (!iActive) return;
+    document.getElementById('step-stage').innerHTML = '';
+    document.getElementById('step-dots').innerHTML  = '';
+    iTimer = setTimeout(() => {
+      if (!iActive) return;
+      D.stepIdx++;
+      showStep();
+    }, 360);
+  }, 2400);
+}
+
+/* — Countdown — */
+function beginCountdown() {
+  nav('drill-countdown');
+  let n = 3;
+  document.getElementById('cd-num').textContent = n;
+  cdTimer = setInterval(() => {
+    n--;
+    if (n <= 0) {
+      clearInterval(cdTimer);
+      cdTimer = null;
+      showRecall();
+    } else {
+      document.getElementById('cd-num').textContent = n;
+    }
+  }, 750);
+}
+
+/* — Recall phase — */
+function showRecall() {
+  nav('drill-recall');
+  D.trialRecall = [];
+  D.selAction   = null;
+  refreshRecallUI();
+  buildGrid();
+}
+
+function refreshRecallUI() {
+  const done  = D.trialRecall.length;
+  const total = D.sequence.length;
+  document.getElementById('recall-prog').textContent = `Step ${done + 1} of ${total}`;
+  document.getElementById('step-inds').innerHTML =
+    D.sequence.map((_, i) =>
+      `<div class="sind ${i < done ? 'done' : ''}"></div>`
+    ).join('');
+  document.getElementById('btn-tap').classList.remove('sel');
+  document.getElementById('btn-spin').classList.remove('sel');
+  D.selAction = null;
+  document.getElementById('recall-hint').textContent = 'Select an action, then tap a shape';
+}
+
+function buildGrid() {
+  const g = document.getElementById('shape-grid');
+  g.innerHTML = '';
+  // 3 rows (shapes) × 4 cols (colors) = 12 cells
+  for (const shape of SHAPES) {
+    for (const color of COLORS) {
+      const cell = document.createElement('div');
+      cell.className = 'sh-cell';
+      cell.innerHTML = svg(shape, color);
+      cell.onclick = () => pickShape(shape, color);
+      g.appendChild(cell);
+    }
+  }
+}
+
+function selAction(a) {
+  D.selAction = a;
+  document.getElementById('btn-tap').classList.toggle('sel', a === 'tap');
+  document.getElementById('btn-spin').classList.toggle('sel', a === 'spin');
+  document.getElementById('recall-hint').textContent =
+    a === 'tap' ? 'Now tap a shape' : 'Now tap the shape to spin';
+}
+
+function pickShape(shape, color) {
+  if (!D.selAction) {
+    document.getElementById('recall-hint').textContent = 'Choose Tap or Spin first';
+    return;
+  }
+  D.trialRecall.push({ action: D.selAction, shape, color });
+  if (D.trialRecall.length >= D.sequence.length) {
+    setTimeout(showTrialResult, 200);
+  } else {
+    refreshRecallUI();
+  }
+}
+
+/* — Trial result — */
+function showTrialResult() {
+  nav('drill-result');
+
+  const seq = D.sequence;
+  const rec = D.trialRecall;
+  let correct = 0;
+  const total = seq.length * 3; // 3 features per step
+
+  const rows = seq.map((step, i) => {
+    const u = rec[i] || {};
+    const aOk = u.action === step.action;
+    const cOk = u.color  === step.color;
+    const sOk = u.shape  === step.shape;
+    const all = aOk && cOk && sOk;
+    correct += (aOk ? 1 : 0) + (cOk ? 1 : 0) + (sOk ? 1 : 0);
+    const uStr = rec[i] ? `${u.action} the ${u.color} ${u.shape}` : '—';
+    return `
+      <div class="res-row ${all ? 'ok' : 'ng'}">
+        <div class="res-ico">${all ? '✓' : '✗'}</div>
+        <div class="res-txt">
+          <strong>${step.action} the ${step.color} ${step.shape}</strong>
+          ${!all ? `<small>You: ${uStr}</small>` : ''}
+        </div>
+        <div class="res-shape">${svg(step.shape, step.color)}</div>
+      </div>`;
+  }).join('');
+
+  const passed = (correct === total);
+  D.blockTrials.push(passed);
+  D.sessionFeatures += correct;
+  if (passed) D.sessionSpan = Math.max(D.sessionSpan, D.length);
+
+  document.getElementById('res-badge').className = `res-badge ${passed ? 'badge-ok' : 'badge-ng'}`;
+  document.getElementById('res-badge').textContent = passed ? '✓ Correct' : '✗ Not quite';
+  document.getElementById('res-sub').textContent   = `${correct} of ${total} features correct`;
+  document.getElementById('res-rows').innerHTML    = rows;
+
+  const blockDone = D.blockTrials.length >= 3;
+  document.getElementById('res-cont-btn').textContent =
+    blockDone ? 'See Block Result' : 'Next Trial';
+}
+
+function continueAfterTrial() {
+  if (D.blockTrials.length >= 3) {
+    const passed = D.blockTrials.filter(Boolean).length;
+    if (passed >= 2) {
+      D.length++;
+      D.blockTrials = [];
+      runTrial();
+    } else {
+      endSession();
+    }
+  } else {
+    runTrial();
+  }
+}
+
+/* — Session complete — */
+function endSession() {
+  const span     = D.sessionSpan;
+  const features = D.sessionFeatures;
+  let newBest    = false;
+
+  if (span > S.pb.span) { S.pb.span = span; newBest = true; }
+  if (features > S.pb.features) S.pb.features = features;
+
+  const today = todayStr();
+  if (S.streak.last !== today) {
+    S.streak.n    = (S.streak.last === yesterdayStr()) ? S.streak.n + 1 : 1;
+    S.streak.last = today;
+  }
+
+  S.history.push({ date: today, span, features });
+  save();
+
+  nav('drill-complete');
+  document.getElementById('complete-title').textContent =
+    newBest ? '🎉 New Personal Best!' : 'Session Complete';
+  document.getElementById('complete-feat').textContent = features;
+  document.getElementById('complete-pb').textContent   = S.pb.span || '—';
+  animNum(document.getElementById('complete-span'), span);
+}
+
+function animNum(el, target) {
+  if (target === 0) { el.textContent = '0'; return; }
+  let cur = 0;
+  const step = Math.max(1, Math.ceil(target / 12));
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur;
+    if (cur >= target) clearInterval(t);
+  }, 65);
+}
+
+function shareScore() {
+  const txt = `My Follow Through score: span of ${S.pb.span}, ${S.pb.features} features correct total. A working memory practice app.`;
+  if (navigator.share) {
+    navigator.share({ text: txt });
+  } else {
+    navigator.clipboard.writeText(txt)
+      .then(() => toast('Score copied to clipboard'))
+      .catch(() => toast('Could not copy'));
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   ORDERING
+══════════════════════════════════════════════════════ */
+let Ord = { task: null, order: [], dragSrc: null };
+
+function renderTaskList() {
+  document.getElementById('task-list').innerHTML = TASKS.map(t => {
+    const p = S.ordProgress[t.id];
+    return `
+      <div class="task-opt" onclick="startOrdering('${t.id}')">
+        <span class="task-name">${t.name}</span>
+        <span class="task-status">${p !== undefined ? `${p}/${t.steps.length} ✓` : 'Try it'}</span>
+      </div>`;
+  }).join('');
+}
+
+function startOrdering(id) {
+  Ord.task  = TASKS.find(t => t.id === id);
+  Ord.order = shuffle([...Ord.task.steps]);
+  nav('ordering-drill');
+  document.getElementById('ord-title').textContent = Ord.task.name;
+  renderOrdSteps();
+}
+
+function renderOrdSteps() {
+  document.getElementById('ord-list').innerHTML = Ord.order.map((step, i) => {
+    const first = i === 0;
+    const last  = i === Ord.order.length - 1;
+    return `
+      <div class="o-item" draggable="true" data-i="${i}"
+           ondragstart="odragStart(event,${i})"
+           ondragover="odragOver(event,${i})"
+           ondrop="odrop(event,${i})"
+           ondragend="odragEnd()">
+        <div class="o-arrows">
+          <button class="arr" onclick="moveOrd(${i},-1)" ${first?'disabled':''}>▲</button>
+          <button class="arr" onclick="moveOrd(${i},1)"  ${last?'disabled':''}>▼</button>
+        </div>
+        <span class="o-num">${i + 1}.</span>
+        <span class="o-text">${esc(step)}</span>
+      </div>`;
+  }).join('');
+}
+
+function moveOrd(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= Ord.order.length) return;
+  [Ord.order[i], Ord.order[j]] = [Ord.order[j], Ord.order[i]];
+  renderOrdSteps();
+}
+
+function odragStart(e, i) {
+  Ord.dragSrc = i;
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+
+function odragOver(e, i) {
+  e.preventDefault();
+  document.querySelectorAll('.o-item').forEach(el => el.classList.remove('drag-over'));
+  if (i !== Ord.dragSrc) e.currentTarget.classList.add('drag-over');
+}
+
+function odrop(e, i) {
+  e.preventDefault();
+  if (Ord.dragSrc === i) return;
+  const item = Ord.order.splice(Ord.dragSrc, 1)[0];
+  Ord.order.splice(i, 0, item);
+  renderOrdSteps();
+}
+
+function odragEnd() {
+  document.querySelectorAll('.o-item').forEach(el => {
+    el.classList.remove('dragging');
+    el.classList.remove('drag-over');
+  });
+  Ord.dragSrc = null;
+}
+
+function checkOrdering() {
+  const correct = Ord.task.steps;
+  const user    = Ord.order;
+  let hits = 0;
+
+  const rows = correct.map((step, i) => {
+    const ok = user[i] === step;
+    if (ok) hits++;
+    return `
+      <div class="ord-row ${ok ? 'ok' : 'ng'}">
+        <span class="ord-ico">${ok ? '✓' : '✗'}</span>
+        <span class="ord-pos">${i + 1}.</span>
+        <span>${esc(step)}</span>
+      </div>`;
+  }).join('');
+
+  S.ordProgress[Ord.task.id] = hits;
+  save();
+
+  nav('ordering-result');
+  document.getElementById('ord-res-body').innerHTML = `
+    <div class="ord-res-title">${hits} of ${correct.length} in the right position</div>
+    ${rows}
+    <div class="explanation">${esc(Ord.task.why)}</div>
+    <button class="btn btn-s" onclick="startOrdering('${Ord.task.id}')">Try Again</button>
+    <button class="btn btn-g" onclick="nav('ordering-list')">Other Tasks</button>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   CHECKLISTS
+══════════════════════════════════════════════════════ */
+let newSteps   = [];
+let viewingCLId = null;
+
+function openCreate() {
+  newSteps = [];
+  document.getElementById('cl-name').value  = '';
+  document.getElementById('step-in').value  = '';
+  document.getElementById('steps-preview').innerHTML = '';
+  nav('checklist-create');
+}
+
+function addStep() {
+  const inp = document.getElementById('step-in');
+  const val = inp.value.trim();
+  if (!val) return;
+  newSteps.push(val);
+  inp.value = '';
+  inp.focus();
+  renderNewSteps();
+}
+
+function renderNewSteps() {
+  document.getElementById('steps-preview').innerHTML = newSteps.map((s, i) => `
+    <div class="sp-item">
+      <span class="sp-n">${i + 1}.</span>
+      <span style="flex:1;">${esc(s)}</span>
+      <button class="sp-del" onclick="delNewStep(${i})">×</button>
+    </div>`).join('');
+}
+
+function delNewStep(i) {
+  newSteps.splice(i, 1);
+  renderNewSteps();
+}
+
+function saveChecklist() {
+  const name = document.getElementById('cl-name').value.trim();
+  if (!name) { toast('Give the checklist a name'); return; }
+  if (!newSteps.length) { toast('Add at least one step'); return; }
+  S.checklists.push({
+    id: 'cl_' + Date.now(),
+    name,
+    steps: newSteps.map(s => ({ text: s, done: false })),
+  });
+  newSteps = [];
+  save();
+  toast('Checklist saved');
+  nav('checklist-list');
+}
+
+function renderCLList() {
+  const el = document.getElementById('cl-list');
+  if (!S.checklists.length) {
+    el.innerHTML = '<div class="empty">No checklists yet. Create one to get started.</div>';
+    return;
+  }
+  el.innerHTML = S.checklists.map(cl => `
+    <div class="cl-opt" onclick="viewCL('${cl.id}')">
+      <div>
+        <div class="cl-opt-name">${esc(cl.name)}</div>
+        <div class="cl-opt-count">${cl.steps.length} step${cl.steps.length !== 1 ? 's' : ''}</div>
+      </div>
+      <span style="color:var(--t3);">→</span>
+    </div>`).join('');
+}
+
+function viewCL(id) {
+  viewingCLId = id;
+  const cl = S.checklists.find(c => c.id === id);
+  document.getElementById('cl-view-title').textContent = cl.name;
+  renderCLSteps(cl);
+  nav('checklist-view');
+}
+
+function renderCLSteps(cl) {
+  document.getElementById('cl-view-steps').innerHTML = cl.steps.map((s, i) => `
+    <div class="cl-step ${s.done ? 'done' : ''}" onclick="toggleCLStep(${i})">
+      <div class="cl-chk">${s.done ? '✓' : ''}</div>
+      <span class="cl-step-txt">${esc(s.text)}</span>
+    </div>`).join('');
+}
+
+function toggleCLStep(i) {
+  const cl = S.checklists.find(c => c.id === viewingCLId);
+  cl.steps[i].done = !cl.steps[i].done;
+  save();
+  renderCLSteps(cl);
+}
+
+function resetCL() {
+  const cl = S.checklists.find(c => c.id === viewingCLId);
+  cl.steps.forEach(s => s.done = false);
+  save();
+  renderCLSteps(cl);
+  toast('Reset');
+}
+
+function deleteCL() {
+  if (!confirm('Delete this checklist?')) return;
+  S.checklists = S.checklists.filter(c => c.id !== viewingCLId);
+  save();
+  nav('checklist-list');
+}
+
+/* ══════════════════════════════════════════════════════
+   HISTORY
+══════════════════════════════════════════════════════ */
+function renderHistory() {
+  const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const today = new Date();
+  const dates = new Set(S.history.map(h => h.date));
+
+  document.getElementById('week-row').innerHTML = Array.from({ length: 7 }, (_, i) => {
+    const d  = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    const ds = d.toISOString().slice(0, 10);
+    return `
+      <div class="wday ${dates.has(ds) ? 'on' : ''}">
+        <div class="wd-lbl">${DAYS[d.getDay()]}</div>
+        <div class="wd-dot"></div>
+      </div>`;
+  }).join('');
+
+  const el = document.getElementById('all-hist');
+  if (!S.history.length) {
+    el.innerHTML = '<div class="empty">No sessions recorded yet.</div>';
+    return;
+  }
+  el.innerHTML = [...S.history].reverse().map(h => `
+    <div class="h-row">
+      <span class="h-date">${fmtDate(h.date)}</span>
+      <span class="h-score">Span ${h.span} &middot; ${h.features} features</span>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════════════════ */
+function renderSettings() {
+  document.getElementById('p-name').value  = S.partner.name  || '';
+  document.getElementById('p-email').value = S.partner.email || '';
+  document.getElementById('send-btn').disabled = !S.partner.email;
+}
+
+function savePartner() {
+  S.partner.name  = document.getElementById('p-name').value.trim();
+  S.partner.email = document.getElementById('p-email').value.trim();
+  save();
+  toast('Partner saved');
+  document.getElementById('send-btn').disabled = !S.partner.email;
+}
+
+function sendEmail() {
+  const name = S.partner.name || 'there';
+  const sub  = encodeURIComponent('My Follow Through score this week');
+  const body = encodeURIComponent(
+    `Hey ${name},\n\nHere is my latest from Follow Through:\n\nBest span: ${S.pb.span} steps\nFeatures correct: ${S.pb.features}\n\nKeeping the streak going.`
+  );
+  window.location.href = `mailto:${S.partner.email}?subject=${sub}&body=${body}`;
+}
+
+function clearData() {
+  if (!confirm('Clear all data? This cannot be undone.')) return;
+  localStorage.removeItem(KEY);
+  S = blankStore();
+  toast('Data cleared');
+  nav('home');
+}
+
+/* ══════════════════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════════════════ */
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+function yesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function fmtDate(ds) {
+  if (ds === todayStr())     return 'Today';
+  if (ds === yesterdayStr()) return 'Yesterday';
+  const d = new Date(ds + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ══════════════════════════════════════════════════════
+   TOOLTIPS
+══════════════════════════════════════════════════════ */
+const TIPS = {
+  span:
+    'Span is the longest sequence you recalled correctly in order. ' +
+    'The drill starts at 2 steps and advances by 1 each time you get 2 of 3 trials right. ' +
+    'Most adults plateau between 4 and 7.',
+  block:
+    'A block is 3 trials at the same length. ' +
+    'You need 2 of those 3 to be fully correct — every action, color, and shape in the right position — ' +
+    'to move up to the next length.',
+  actions:
+    'Tap: click or touch the shape once. ' +
+    'Spin: the shape rotates when selected. ' +
+    'Choose the action that matched the instruction, then tap the correct shape.',
+  ordering:
+    'People tend to follow instructions in the order they read them. ' +
+    'If steps are scrambled or back-phrased — "before you send it, attach the file" — errors follow. ' +
+    'These drills build the habit of sequencing before acting.',
+  checklists:
+    "A checklist offloads sequence memory to paper, protecting against distraction and interruption. " +
+    "In Atul Gawande's WHO surgical trial, a 19-item checklist cut complication rates by 36% and deaths by 47%.",
+  'ordering-page':
+    'Steps done out of order cause failures the same way wrong steps do — sometimes worse, ' +
+    "because the mistake is harder to trace. Pick a task and put its steps in the order you'd actually do them.",
+  'checklists-page':
+    'Create a checklist for any recurring task you follow from instructions. ' +
+    'Work through it step by step each time. ' +
+    'The goal is to stop relying on memory and start relying on the list.',
+};
+
+let _tip = null;
+let _tipBtn = null;
+
+function showTip(e, key) {
+  e.stopPropagation();
+  const btn = e.currentTarget;
+  if (_tip && _tipBtn === btn) { dismissTip(); return; }
+  dismissTip();
+
+  _tipBtn = btn;
+  const msg = TIPS[key] || key;
+  const bubble = document.createElement('div');
+  bubble.className = 'tip-bubble';
+  bubble.textContent = msg;
+  document.body.appendChild(bubble);
+
+  const rect = btn.getBoundingClientRect();
+  let left = rect.left + rect.width / 2 - 130;
+  left = Math.max(10, Math.min(left, window.innerWidth - 270));
+  let top = rect.bottom + 8;
+  if (top + 140 > window.innerHeight - 80) top = rect.top - 148;
+
+  bubble.style.left = left + 'px';
+  bubble.style.top  = top  + 'px';
+  _tip = bubble;
+
+  setTimeout(() => document.addEventListener('click', dismissTip, { once: true }), 20);
+}
+
+function dismissTip() {
+  if (_tip) { _tip.remove(); _tip = null; }
+  _tipBtn = null;
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+load();
+renderHome();
+</script>
+</body>
+</html>
